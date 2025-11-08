@@ -63,11 +63,12 @@ https://github.com/juanfont/headscale/releases/download/v$HSVER/headscale_$HSVER
 
 chmod +x $JAILDIR/headscale/usr/bin/headscale
 
-# Need to substitute with adduser, gonna finish tomorrow
-#sudo useradd \
-# --create-home \
-# --home-dir /var/lib/headscale/ \
-# --system \
-# --user-group \
-# --shell /usr/sbin/nologin \
-# headscale
+#add user with pw
+sudo pw useradd headscale \
+  -d /var/lib/headscale \
+  -s /usr/sbin/nologin \
+  -c "Headscale system user" \
+  -g nogroup \
+  -m
+
+mkdir -p $JAILDIR/headscale/etc/headscale
