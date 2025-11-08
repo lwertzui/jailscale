@@ -3,7 +3,7 @@
 HSVER=$(curl -sI https://github.com/juanfont/headscale/releases/latest \
   | grep -i '^location:' \
   | awk -F/ '{print $NF}' \
-  | tr -d '\r')
+  | tr -d '\rv')
 
 JAILDIR="/usr/jails"
 
@@ -58,13 +58,13 @@ fi
 
 echo "Base jail installed successfully at: $JAILDIR/headscale"
 
-wget --output-document=$JAILDIR/headscale/usr/bin/headscale \
+wcurl --output=$JAILDIR/headscale/usr/bin/headscale \
 https://github.com/juanfont/headscale/releases/download/v$HSVER/headscale_$HSVER_freebsd_amd64
 
 chmod +x $JAILDIR/headscale/usr/bin/headscale
 
 #add user with pw
-sudo pw useradd headscale \
+pw useradd headscale \
   -d /var/lib/headscale \
   -s /usr/sbin/nologin \
   -c "Headscale system user" \
