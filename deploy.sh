@@ -46,12 +46,17 @@ if ! grep -q '^\s*headscale\s*{' /etc/jail.conf; then
     cat <<'EOF' >> /etc/jail.conf
 headscale {
     path = /usr/jails/headscale;
-    host.hostname = headscale.localdomain;
     exec.start = "/bin/sh /etc/rc";
     exec.stop  = "/bin/sh /etc/rc.shutdown";
     exec.clean;
     mount.devfs;
     persist;
+    
+    #networking
+    host.hostname = headscale.localdomain;
+    interface = vtnet0;
+    ip4.addr = 172.17.254.156/24;
+    allow.raw_sockets;
 }
 EOF
 else
@@ -61,7 +66,12 @@ fi
 echo "Base jail installed successfully at: $JAILDIR/headscale"
 
 wcurl --output=$JAILDIR/headscale/usr/bin/headscale \
-https://github.com/juanfont/headscale/releases/download/v$HSVER/headscale_$HSVER_freebsd_amd64
+https://github.com/juanfont/headscale/releases/download/v${HSVER}/headscale_${HSVER}_freebsd_amd64
+
+wcurl --output=$JAILDIR/headscale/etc/headscale/config.yaml \
+https://raw.githubusercontent.com/juanfont/headscale/v${HSVER}/config-example.yaml
+
+cp /etc/resolv.conf $JAILDIR/headscale/etc/resolv.conf
 
 chmod +x $JAILDIR/headscale/usr/bin/headscale
 
