@@ -25,7 +25,7 @@ export DISTRIBUTIONS="base.txz"
 REL="$(freebsd-version | cut -d- -f1)"
 export BSDINSTALL_DISTSITE="https://download.freebsd.org/ftp/releases/amd64/${REL}-RELEASE"
 
-if ! [-d "/usr/freebsd-dist"]
+if ! [-d "/usr/freebsd-dist"]; then
 	mkdir -p '/usr/freebsd-dist'
 # Fetch and extract base sets (non-interactive)
 bsdinstall distfetch
