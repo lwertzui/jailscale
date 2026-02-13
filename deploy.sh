@@ -21,13 +21,16 @@ echo "Installing FreeBSD base system into $JAILDIR/headscale"
 export BSDINSTALL_CHROOT="$JAILDIR/headscale"
 export DISTRIBUTIONS="base.txz"
 
-# Automatically detect release version
+MIRROR = $(mktemp)
+
+
 REL="$(freebsd-version | cut -d- -f1)"
-export BSDINSTALL_DISTSITE="https://download.freebsd.org/ftp/releases/amd64/${REL}-RELEASE"
+export BSDINSTALL_DISTSITE="https://$MIRROR/ftp/releases/amd64/${REL}-RELEASE"
 
 if ! [-d "/usr/freebsd-dist"]; then
 	mkdir -p '/usr/freebsd-dist'
 fi
+
 # Fetch and extract base sets (non-interactive)
 bsdinstall distfetch
 bsdinstall distextract
@@ -43,6 +46,33 @@ if ! grep -q '^jail_parallel_start="YES"' /etc/rc.conf; then
 	echo 'jail_parallel_start="YES"' >> /etc/rc.conf
 fi
 
+OUT=$(mktemp)
+bsddialog --backtitle "Network Setup" \
+          --title "CIDR Input" \
+          --inputbox "Enter an IP address for Headscale in CIDR format (e.g., 192.168.1.0/24):" \
+          10 50 \
+          2> "$OUT"
+
+RET=$?   # Return code from bsddialog
+
+# Check if user pressed OK
+if [ $RET -eq 0 ]; then
+	echo "User entered: $CIDR"
+else
+	echo "User cancelled."
+	exit 1
+fi
+
+# Optional: Validate CIDR using a regex
+if echo "$CIDR" | grep -Eq '^([0-9]{1,3}\.){3}[0-9]{1,3}/([0-9]|[12][0-9]|3[0-2])$'; then
+	CIDR=$(cat "$OUT")
+else
+	echo "Invalid CIDR format."
+	exit 1
+fi
+
+rm "$OUT"
+
 if ! grep -q '^\s*headscale\s*{' /etc/jail.conf; then
 	echo "adding jail 'headscale' to /etc/jail.conf"
 	cat <<'EOF' >> /etc/jail.conf
@@ -57,7 +87,7 @@ headscale {
 	#networking
 	host.hostname = headscale.localdomain;
 	interface = vtnet0;
-	ip4.addr = 172.17.254.156/24;
+	ip4.addr = $CIDR;
 	allow.raw_sockets;
 }
 EOF
